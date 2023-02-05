@@ -111,15 +111,19 @@ func (p *MTPlugins) Load() ([]*PluginVersion, error) {
 		log.Printf("load plugin: %s", file)
 		plugin, err := p.loadPlugin(file)
 		if err != nil {
-			log.Printf("cannot load plugin %s: %s", file, err)
 			continue
 		}
 		plugins = append(plugins, plugin)
 	}
 
-	plugins = p.filterByStages(plugins)
+	plugins = p.filterByName(p.filterByStages(plugins))
+	
+	if len(plugins) == 0 {
+		log.Fatal(ErrNoPlugins)
+		return nil, ErrNoPlugins
+	}
 
-	return p.filterByName(plugins), nil
+	return plugins, nil
 }
 
 func (p *MTPlugins) filterByStages(plugins []*PluginVersion) []*PluginVersion {
@@ -210,6 +214,7 @@ func (p *MTPlugins) checkIfAppSatisfied(plugin *PluginVersion) error {
 		if p.appName == "" && p.appVersion == nil {
 			return nil
 		}
+		log.Printf("plugin is not compatible with current app: %s", p.appName)
 		return ErrNotAnApp
 	}
 
