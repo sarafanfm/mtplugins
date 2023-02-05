@@ -109,7 +109,7 @@ func (p *MTPlugins) Load() ([]*PluginVersion, error) {
 	plugins := []*PluginVersion{}
 	for _, file := range matches {
 		log.Printf("load plugin: %s", file)
-		plugin, err := p.loadPlugin(filepath.Join(p.pluginsPath, file))
+		plugin, err := p.loadPlugin(file)
 		if err != nil {
 			log.Printf("cannot load plugin %s: %s", file, err)
 			continue
