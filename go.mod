@@ -7,7 +7,7 @@ replace (
 	nhooyr.io/websocket v1.8.6 => nhooyr.io/websocket v1.8.7
 )
 
-require github.com/sarafanfm/mtserver v1.3.0
+require github.com/sarafanfm/mtserver v1.3.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0

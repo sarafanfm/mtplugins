@@ -2,11 +2,13 @@
 
 Wrapper around [MTServer](https://github.com/sarafanfm/mtserver) that allows you to hide business logic from prying eyes.
 
+### GoLang 1.18+ is required and Windows is not supported by [plugin](https://pkg.go.dev/plugin)
+
 ## Idea
 
 Sometimes it becomes necessary to restrict access to a part of the project functionality.
 For example, you may have several developers, some of whom should not see the billing system algorithms.
-In this case, the standard functionality of Go, which is called [plugins](https://pkg.go.dev/plugin), can come in handy.
+In this case, the standard functionality of Go, which is called [plugin](https://pkg.go.dev/plugin), can come in handy.
 
 The idea is that at the build stage of the project, the restricted parts of the project have already been compiled.
 More precisely, we will compile all the business logic before building the project.
@@ -40,5 +42,8 @@ And `user`'s gRPC client must implement `user` service interface with calls to `
 Each service must expose the `plugin interface` and must be compiled with `-buildmode=plugin`.
 
 ### Executable repo
+
+Find, load and init plugins then start [MTServer](https://github.com/sarafanfm/mtserver)
+
 
 TODO
