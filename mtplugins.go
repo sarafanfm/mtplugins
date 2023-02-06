@@ -1,7 +1,6 @@
 package mtplugins
 
 import (
-	"log"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -46,8 +45,7 @@ func New(appName, appVersion, pluginsPath string, pluginsStages []ReleaseStage) 
 		var err error
 		appVer, err = semver.NewVersion(appVersion)
 		if err != nil {
-			log.Fatal("app version is invalid")
-			return nil
+			panic(err)
 		}
 	}
 
@@ -74,13 +72,11 @@ func GetInitFunc[T any](pv *PluginVersion) (T, error) {
 
 	initSymbol, err := pv.pluginSymbol.Lookup(pv.InitFuncName)
 	if err != nil {
-		log.Printf("cannot find init func for plugin: %s %s", pv.Name, pv.Version)
 		return initFunc, ErrBadInitFunc
 	}
 
 	initFunc, ok := initSymbol.(T)
 	if !ok {
-		log.Printf("wrong plugin init func declaration for plugin: %s %s", pv.Name, pv.Version)
 		return initFunc, ErrBadInitType
 	}
 
@@ -98,17 +94,14 @@ func (p *MTPlugins) Run() {
 func (p *MTPlugins) Load() ([]*PluginVersion, error) {
 	matches, err := filepath.Glob(filepath.Join(p.pluginsPath, PLUGIN_PATTERN))
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	if len(matches) == 0 {
-		log.Fatal(ErrNoPlugins)
 		return nil, ErrNoPlugins
 	}
 
 	plugins := []*PluginVersion{}
 	for _, file := range matches {
-		log.Printf("load plugin: %s", file)
 		plugin, err := p.loadPlugin(file)
 		if err != nil {
 			continue
@@ -119,7 +112,6 @@ func (p *MTPlugins) Load() ([]*PluginVersion, error) {
 	plugins = p.filterByName(p.filterByStages(plugins))
 	
 	if len(plugins) == 0 {
-		log.Fatal(ErrNoPlugins)
 		return nil, ErrNoPlugins
 	}
 
@@ -147,7 +139,6 @@ func (p *MTPlugins) filterByStages(plugins []*PluginVersion) []*PluginVersion {
 				}
 			}
 			if !found {
-				log.Printf("plugin is not in selected stages: %s %s", plugin.Name, plugin.Version)
 				continue
 			}
 		}
@@ -180,24 +171,20 @@ func (p *MTPlugins) filterByName(plugins []*PluginVersion) []*PluginVersion {
 func (p *MTPlugins) loadPlugin(file string) (*PluginVersion, error) {
 	plugin, err := plugin.Open(file)
 	if err != nil {
-		log.Printf("error opening so file %s: %s", file, err)
 		return nil, ErrNotAPlugin
 	}
 	versionSymbol, err := plugin.Lookup(PLUGIN_VERSION_FUNC)
 	if err != nil {
-		log.Printf("cannot find version func in so file: %s", file)
 		return nil, ErrCannotGetVer
 	}
 	versionFunc, ok := versionSymbol.(func() *PluginVersion)
 	if !ok {
-		log.Printf("wrong plugin version func declaration in so file: %s", file)
 		return nil, ErrCannotGetVer
 	}
 	version := versionFunc()
 	version.pluginSymbol = plugin
 	version.pluginSemver, err = semver.NewVersion(version.Version)
 	if err != nil {
-		log.Printf("plugin version is invalid: %s %s", version.Name, version.Version)
 		return nil, ErrBadPluginVer
 	}
 
@@ -214,17 +201,14 @@ func (p *MTPlugins) checkIfAppSatisfied(plugin *PluginVersion) error {
 		if p.appName == "" && p.appVersion == nil {
 			return nil
 		}
-		log.Printf("plugin is not compatible with current app: %s", p.appName)
 		return ErrNotAnApp
 	}
 
 	ver, err := semver.NewConstraint(appVer)
 	if err != nil {
-		log.Printf("cannot parse app version constraints in plugin: %s", appVer)
 		return ErrBadPluginVer
 	}
 	if !ver.Check(p.appVersion) {
-		log.Printf("plugin is not compatible with current app version : %s", appVer)
 		return ErrBadAppVersion
 	}
 	return nil
